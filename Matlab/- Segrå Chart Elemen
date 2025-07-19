@@ -1,0 +1,113 @@
+Exercise-A
+%% Load Data
+% Load data from the provided CSV files into MATLAB
+stable_data = readtable('/MATLAB Drive/all_stable - all_stable.csv'); % Stable nuclides data
+stable2_data = readtable('/MATLAB Drive/all_stable2 - all_stable2.csv'); % Additional stable data with averages
+unstable_data = readtable('/MATLAB Drive/all_unstable - all_unstable.csv'); % Unstable nuclides data
+%% Define Column Names
+% Assign column names for better code readability and reusability
+neutron_column_stable = 'N'; % Column name for the number of neutrons
+atomic_number_column = 'Z'; % Column name for atomic number (protons)
+nat_abundance_column = 'Nat_abundance'; % Column name for natural abundance
+neutron_avg_column = 'N_avg'; % Column name for average neutrons in stable2 data
+%% Plot NZ1: Segre Chart of Known Nuclides
+% Create a Segre chart displaying stable and unstable nuclides
+figure;
+% Plot stable nuclides in red squares
+scatter(stable_data.(neutron_column_stable), stable_data.(atomic_number_column), 50, ...
+'s', 'MarkerFaceColor', 'r', 'MarkerEdgeColor', 'k');
+hold on;
+% Plot neutron-rich unstable nuclides (N > Z) in cyan triangles
+neutron_rich = unstable_data(unstable_data.(neutron_column_stable) > unstable_data.(atomic_number_column), :);
+scatter(neutron_rich.(neutron_column_stable), neutron_rich.(atomic_number_column), 50, ...
+'^', 'MarkerFaceColor', 'c', 'MarkerEdgeColor', 'w');
+% Plot proton-rich unstable nuclides (N < Z) in magenta inverted triangles
+proton_rich = unstable_data(unstable_data.(neutron_column_stable) < unstable_data.(atomic_number_column), :);
+scatter(proton_rich.(neutron_column_stable), proton_rich.(atomic_number_column), 50, ...
+'v', 'MarkerFaceColor', 'm', 'MarkerEdgeColor', 'w');
+% Plot symmetric radioactive isotopes (N = Z) as white circles
+symmetric = unstable_data(unstable_data.(neutron_column_stable) == unstable_data.(atomic_number_column), :);
+scatter(symmetric.(neutron_column_stable), symmetric.(atomic_number_column), 50, ...
+'o', 'MarkerFaceColor', 'w', 'MarkerEdgeColor', 'r');
+% Add N/Z = 1 reference line
+n_vals = 0:max([stable_data.(neutron_column_stable); unstable_data.(neutron_column_stable)]);
+plot(n_vals, n_vals, 'g--', 'LineWidth', 1.75);
+% Add titles, labels, and legend for NZ1
+title('Segre Chart of Known Nuclides');
+xlabel('Number of Neutrons (N)');
+ylabel('Atomic Number (Z)');
+grid on;
+legend('Stable nuclides', 'Neutron-rich nuclides', 'Proton-rich nuclides', 'Symmetric RIs', 'N/Z = 1', 'Location', 'best');
+hold off;
+%% Average N/Z Calculation
+% Calculate the average N/Z ratio for stable2 data
+avg_NZ = mean(stable2_data.(neutron_avg_column) ./ stable2_data.(atomic_number_column));
+% Determine the range of Z where N/Z is within 10% of 1
+within_range = stable2_data( ...
+(stable2_data.(neutron_avg_column) ./ stable2_data.(atomic_number_column)) >= 0.9 & ...
+(stable2_data.(neutron_avg_column) ./ stable2_data.(atomic_number_column)) <= 1.1, :);
+range_Z = [min(within_range.(atomic_number_column)), max(within_range.(atomic_number_column))];
+% Find the maximum average N/Z ratio
+max_NZ = max(stable2_data.(neutron_avg_column) ./ stable2_data.(atomic_number_column));
+% Display average N/Z calculations in the Command Window
+disp(['Average N/Z: ', num2str(avg_NZ)]);
+disp(['Range where N/Z is within 10% of 1: Z = ', num2str(range_Z(1)), ' to Z = ', num2str(range_Z(2))]);
+disp(['Maximum N/Z ratio: ', num2str(max_NZ)]);
+%% Add Max Average N/Z Line to NZ1
+% Plot a line corresponding to the maximum average N/Z ratio on the Segre chart
+hold on;
+plot(n_vals, n_vals * max_NZ, 'b-.', 'LineWidth', 1.75);
+hold off;
+%% Plot NZ2: N/Z vs. Z
+% Create a plot showing the N/Z ratio against the atomic number Z
+figure;
+% Plot N/Z without considering natural abundance
+plot(stable2_data.(atomic_number_column), stable2_data.(neutron_avg_column) ./ stable2_data.(atomic_number_column), ...
+'r-', 'LineWidth', 1.5);
+hold on;
+% Plot N/Z considering natural abundance
+weighted_NZ = stable2_data.N_avg_weighted_by_abundance ./ stable2_data.(atomic_number_column);
+plot(stable2_data.(atomic_number_column), weighted_NZ, ...
+'b--', 'LineWidth', 1.5);
+% Customize line style for N/Z without abundance
+set(findobj(gca, 'Type', 'line', 'Color', 'r'), 'LineStyle', '-.');
+% Add titles, labels, and legend for NZ2
+title('N/Z vs Z (Step 6 & 7)');
+xlabel('Atomic Number (Z)');
+ylabel('N/Z Ratio');
+grid on;
+legend('N/Z (w/o abundance)', 'N/Z (w/ abundance)', 'Location', 'best');
+hold off;
+Exercise-B:
+%Code for Calculating Mass Defect, Binding Energy, and BE/A Curve
+% Conversion factor: 1 atomic mass unit (amu) to MeV
+amu_to_MeV = 931.5;
+% Given masses in atomic mass units (amu)
+m_U235 = 235.043924; % Mass of Uranium-235
+m_n = 1.008665;
+ % Mass of a neutron
+m_Rb93 = 92.91699;
+ % Mass of Rubidium-93
+m_Cs140 = 139.90910; % Mass of Cesium-140
+m_n_products = 3 * m_n; % Total mass of 3 emitted neutrons
+% Compute total mass of reactants and products
+mass_reactants = m_U235 + m_n; % Mass of Uranium-235 and one neutron
+mass_products = m_Rb93 + m_Cs140 + m_n_products; % Mass of fission products and neutrons
+% Calculate mass defect (Δm)
+mass_defect = mass_reactants - mass_products;
+% Compute binding energy (B.E.) in MeV
+binding_energy = mass_defect * amu_to_MeV;
+% Calculate binding energy per nucleon (B.E./A)
+A = 235; % Total number of nucleons in Uranium-235
+binding_energy_per_nucleon = binding_energy / A;
+% Display results
+disp('Mass defect (amu):');
+disp(mass_defect);
+disp('Binding energy (MeV):');
+disp(binding_energy);
+disp('Binding energy per nucleon (MeV):');
+disp(binding_energy_per_nucleon);
+% Generate and plot the Binding Energy per Nucleon (B.E./A) Curve
+atomic_numbers = 1:240; % Range of mass numbers for hypothetical nuclides
+binding_energies = 15.75 .* atomic_numbers - 17.8 * (atomic_numbers.^(2/3)); % Binding energy model
+binding_energies = binding_energies ./ atomic_numbers; % Normalize to calculate B.E./A
