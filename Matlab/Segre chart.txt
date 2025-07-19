@@ -1,0 +1,55 @@
+% Step:1 Load the CSV file
+data = readtable('C:\Users\NSE Lab\Downloads\PubChemElements_all.csv');
+
+% Step:2 Extract relevant data columns
+atomicNumber = data.AtomicNumber; % Number of protons
+atomicMass = data.AtomicMass; % Atomic mass (approximation of total nucleons)
+neutronNumber = atomicMass - atomicNumber; % Approximation of neutron count
+
+% Step:3 Plot the Segrè chart
+figure;
+scatter(atomicNumber, neutronNumber, 50, 's', 'MarkerEdgeColor', 'k', 'MarkerFaceColor','g');
+hold on;
+
+% Step:4 Add reference line for N = Z (Neutrons = Protons)
+x = 0:max(atomicNumber);
+plot(x, x, 'r--', 'LineWidth', 1.5);
+R = neutronNumber./atomicNumber;
+
+% Step:5 Chart labels and title
+xlabel('Number of Protons (Z)');
+ylabel('Number of Neutrons (N)');
+title('Experiment:5 - Segrè Chart of Elements');
+grid on;
+
+% Step:6 Customize axis limits
+xlim([0 max(atomicNumber) + 5]);
+ylim([0 max(neutronNumber) + 5]);
+
+legend({'Elements', 'N = Z'}, 'Location', 'best');
+hold off;
+%%
+% Prompt user for input
+Z = input('Enter the number of protons (Z): ');
+A = input('Enter the mass number (A): ');
+M = input('Enter the mass of the nucleus (in amu): ');
+m_p = input('Enter the mass of a proton (in amu): ');
+m_n = input('Enter the mass of a neutron (in amu): ');
+
+% Conversion factor
+conversion_factor = 931.5; % MeV/amu
+
+% Mass Defect Calculation
+mass_defect = Z * m_p + (A - Z) * m_n - M;
+
+% Binding Energy Calculation
+binding_energy = mass_defect * conversion_factor;
+
+% Binding Energy per Nucleon Calculation
+binding_energy_per_nucleon = binding_energy / A;
+
+% Display Results
+fprintf('\nResults:\n');
+fprintf('Mass Defect: %.6f amu\n', mass_defect);
+fprintf('Binding Energy: %.2f MeV\n', binding_energy);
+fprintf('Binding Energy per Nucleon: %.2f MeV\n', binding_energy_per_nucleon);
